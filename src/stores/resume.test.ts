@@ -29,8 +29,13 @@ describe('resume store', () => {
     expect(store.header.schoolLogo).toBe('')
     expect(store.header.schoolLogoSize).toBe(100)
     expect(store.header.photoSize).toBe(100)
+    const education = store.sections.find((section) => section.type === 'education')!
+    expect(education.items[0].educationTags).toEqual({ is985: false, is211: false, isDoubleFirstClass: false })
     const internship = store.sections.find((section) => section.type === 'internship')!
-    expect(internship.items[0].summary).toBe('')
+    expect(internship.items[0].summaryHtml).toBe('')
+    expect(internship.items[0].descriptionHtml).toBe('')
+    const project = store.sections.find((section) => section.type === 'project')!
+    expect(project.items[0].summaryHtml).toBe('')
     const skills = store.sections.find((section) => section.type === 'skills')!
     expect(skills.items).toHaveLength(0)
     expect(skills.richText).toBe('<p></p>')
@@ -90,5 +95,38 @@ describe('resume store', () => {
     expect(await store.loadDraft('legacy-resume')).toBe(true)
     expect(store.header.schoolLogoSize).toBe(100)
     expect(store.header.photoSize).toBe(100)
+  })
+
+  it('migrates legacy education tags and internship rich text when loading a draft', async () => {
+    const legacy = createDefaultState() as ResumeState
+    legacy.sections = [
+      {
+        id: 'edu-1', type: 'education', title: '教育经历', icon: 'GraduationCap', visible: true, expanded: true, richText: '',
+        items: [{
+          id: 'edu-item-1', organization: '华中师范大学', position: '人工智能', startDate: '2025.09', endDate: '2028.06',
+          location: '', subtitle: '211 · 双一流', summary: '', description: [],
+          educationTags: undefined as never, summaryHtml: '', descriptionHtml: '',
+        }],
+      },
+      {
+        id: 'int-1', type: 'internship', title: '实习经历', icon: 'BriefcaseBusiness', visible: true, expanded: true, richText: '',
+        items: [{
+          id: 'int-item-1', organization: '某公司', position: '实习生', startDate: '2026.03', endDate: '至今',
+          location: '', subtitle: '', summary: '一句话概括', description: ['要点一', '要点二'],
+          educationTags: { is985: false, is211: false, isDoubleFirstClass: false }, summaryHtml: '', descriptionHtml: '',
+        }],
+      },
+    ]
+    fetchMock.mockResolvedValueOnce(response(200, legacy))
+    setActivePinia(createPinia())
+    const store = useResumeStore()
+    expect(await store.loadDraft('legacy-tags')).toBe(true)
+
+    const education = store.sections.find((section) => section.type === 'education')!
+    expect(education.items[0].educationTags).toEqual({ is985: false, is211: true, isDoubleFirstClass: true })
+
+    const internship = store.sections.find((section) => section.type === 'internship')!
+    expect(internship.items[0].summaryHtml).toBe('<p>一句话概括</p>')
+    expect(internship.items[0].descriptionHtml).toBe('<ul><li>要点一</li><li>要点二</li></ul>')
   })
 })

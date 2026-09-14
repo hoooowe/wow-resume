@@ -1,16 +1,69 @@
 import { defineStore } from 'pinia'
-import type { IconName, ResumeItem, ResumeSection, ResumeState, SectionType } from '../types'
+import type { EducationTags, IconName, ResumeItem, ResumeSection, ResumeState, SectionType } from '../types'
 
 let counter = 0
 let activeResumeId = ''
 export const createId = (prefix = 'id') => `${prefix}-${Date.now().toString(36)}-${(++counter).toString(36)}`
 
+const emptyEducationTags = (): EducationTags => ({ is985: false, is211: false, isDoubleFirstClass: false })
+
 const item = (data: Partial<ResumeItem> = {}): ResumeItem => ({
-  id: createId('item'), organization: '', position: '', startDate: '', endDate: '', location: '', subtitle: '', summary: '', description: [''], ...data,
+  id: createId('item'), organization: '', position: '', startDate: '', endDate: '', location: '', subtitle: '', summary: '', description: [''],
+  educationTags: emptyEducationTags(), summaryHtml: '', descriptionHtml: '', ...data,
 })
+
+const itemForType = (type: SectionType): ResumeItem => {
+  if (type === 'education') return item({ description: [] })
+  if (type === 'internship' || type === 'project') return item({ description: [], summaryHtml: '', descriptionHtml: '' })
+  if (type === 'skills') return item({ description: [] })
+  return item()
+}
 
 const section = (type: SectionType, title: string, icon: IconName, items: ResumeItem[]): ResumeSection => ({
   id: createId('section'), type, title, icon, visible: true, expanded: true, richText: '', items,
+})
+
+const toRichParagraph = (text: string) => {
+  const trimmed = text.trim()
+  if (!trimmed) return ''
+  if (trimmed.startsWith('<')) return trimmed
+  return `<p>${trimmed}</p>`
+}
+
+const toRichList = (bullets: string[]) => {
+  const parts = bullets.map((entry) => entry.trim()).filter(Boolean)
+  if (!parts.length) return ''
+  return `<ul>${parts.map((entry) => `<li>${entry}</li>`).join('')}</ul>`
+}
+
+const parseEducationSubtitle = (subtitle: string): EducationTags => {
+  const parts = subtitle.split(/[·・]/).map((value) => value.trim()).filter(Boolean)
+  return {
+    is985: parts.includes('985'),
+    is211: parts.includes('211'),
+    isDoubleFirstClass: parts.includes('双一流'),
+  }
+}
+
+const normalizeItem = (raw: Partial<ResumeItem>, type: SectionType): ResumeItem => {
+  const base = item(raw)
+  if (type === 'education') {
+    const tags = raw.educationTags
+      ? { ...emptyEducationTags(), ...raw.educationTags }
+      : parseEducationSubtitle(raw.subtitle ?? '')
+    return { ...base, description: raw.description ?? [], educationTags: tags }
+  }
+  if (type === 'internship' || type === 'project') {
+    const summaryHtml = raw.summaryHtml || toRichParagraph(raw.summary ?? '')
+    const descriptionHtml = raw.descriptionHtml || toRichList(raw.description ?? [])
+    return { ...base, description: [], summaryHtml, descriptionHtml }
+  }
+  return base
+}
+
+const normalizeSection = (raw: ResumeSection): ResumeSection => ({
+  ...raw,
+  items: (raw.items ?? []).map((entry) => normalizeItem(entry, raw.type)),
 })
 
 export const createDefaultState = (): ResumeState => ({
@@ -20,9 +73,9 @@ export const createDefaultState = (): ResumeState => ({
     schoolLogo: '', schoolLogoSize: 100, photo: '', photoSize: 100,
   },
   sections: [
-    section('education', '教育经历', 'GraduationCap', [item({ description: [] })]),
-    section('internship', '实习经历', 'BriefcaseBusiness', [item()]),
-    section('project', '项目经历', 'FolderKanban', [item()]),
+    section('education', '教育经历', 'GraduationCap', [itemForType('education')]),
+    section('internship', '实习经历', 'BriefcaseBusiness', [itemForType('internship')]),
+    section('project', '项目经历', 'FolderKanban', [itemForType('project')]),
     { ...section('skills', '专业技能', 'Code2', []), richText: '<p></p>' },
   ],
   styles: {
@@ -43,7 +96,7 @@ const mergeState = (saved?: Partial<ResumeState>): ResumeState => {
     ...saved,
     header: { ...defaults.header, ...saved.header },
     styles: { ...defaults.styles, ...saved.styles },
-    sections: Array.isArray(saved.sections) ? saved.sections : defaults.sections,
+    sections: Array.isArray(saved.sections) ? saved.sections.map(normalizeSection) : defaults.sections,
   }
 }
 
@@ -82,10 +135,13 @@ export const useResumeStore = defineStore('resume', {
     },
     addSection(type: SectionType) {
       const template = sectionTemplates[type]
-      this.sections.push(section(type, template.title, template.icon, type === 'skills' ? [] : [item()]))
+      this.sections.push(section(type, template.title, template.icon, type === 'skills' ? [] : [itemForType(type)]))
     },
     deleteSection(sectionId: string) { this.sections = this.sections.filter((entry) => entry.id !== sectionId) },
-    addItem(sectionId: string) { this.sections.find((entry) => entry.id === sectionId)?.items.push(item()) },
+    addItem(sectionId: string) {
+      const target = this.sections.find((entry) => entry.id === sectionId)
+      if (target) target.items.push(itemForType(target.type))
+    },
     deleteItem(sectionId: string, itemId: string) {
       const target = this.sections.find((entry) => entry.id === sectionId)
       if (target) target.items = target.items.filter((entry) => entry.id !== itemId)

@@ -6,6 +6,12 @@ export type IconName =
 
 export type SectionType = 'education' | 'internship' | 'project' | 'research' | 'campus' | 'skills' | 'awards' | 'custom'
 
+export interface EducationTags {
+  is985: boolean
+  is211: boolean
+  isDoubleFirstClass: boolean
+}
+
 export interface ResumeItem {
   id: string
   organization: string
@@ -16,6 +22,9 @@ export interface ResumeItem {
   subtitle: string
   summary: string
   description: string[]
+  educationTags: EducationTags
+  summaryHtml: string
+  descriptionHtml: string
 }
 
 export interface ResumeSection {
