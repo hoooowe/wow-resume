@@ -8,23 +8,29 @@ let pendingReader: FileReader | undefined
 
 function choose() { input.value?.click() }
 
+function cancelPendingUpload() {
+  pendingReader?.abort()
+  pendingReader = undefined
+}
+
 function upload(event: Event) {
   const fileInput = event.currentTarget as HTMLInputElement
   const file = fileInput.files?.[0]
   fileInput.value = ''
   if (!file || !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) return
 
-  pendingReader?.abort()
+  cancelPendingUpload()
   const reader = new FileReader()
   pendingReader = reader
   reader.onload = () => {
+    pendingReader = undefined
     if (typeof reader.result === 'string') emit('update:modelValue', reader.result)
   }
   reader.readAsDataURL(file)
 }
 
 function remove() {
-  pendingReader?.abort()
+  cancelPendingUpload()
   emit('update:modelValue', '')
 }
 
@@ -32,7 +38,8 @@ function updateSize(event: Event) {
   emit('update:size', Number((event.target as HTMLInputElement).value))
 }
 
-onBeforeUnmount(() => pendingReader?.abort())
+defineExpose({ cancelPendingUpload })
+onBeforeUnmount(cancelPendingUpload)
 </script>
 <template>
   <div class="image-upload">

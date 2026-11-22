@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { companyLogos } from '../companyLogos'
 import type { ResumeState } from '../types'
 import { createBlankState, createDefaultState, useResumeStore } from './resume'
 import { safeExportName } from '../utils/fileName'
@@ -72,7 +73,8 @@ describe('resume store', () => {
     expect(await store.loadDraft('resume-1')).toBe(true)
     store.header.name = '测试用户'
     const internship = store.sections.find((section) => section.type === 'internship')!
-    const logo = 'data:image/png;base64,bG9nbw=='
+    const logo = companyLogos.find((entry) => entry.id === 'google')!.src
+    expect(logo).toMatch(/^data:image\/png;base64,iVBORw0KGgo/)
     expect(internship.items[0].logo).toBeUndefined()
     internship.items[0].logo = logo
     fetchMock.mockResolvedValueOnce(response(200, { saved: true }))
