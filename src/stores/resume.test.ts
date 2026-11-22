@@ -71,6 +71,10 @@ describe('resume store', () => {
     fetchMock.mockResolvedValueOnce(response(200, createDefaultState()))
     expect(await store.loadDraft('resume-1')).toBe(true)
     store.header.name = '测试用户'
+    const internship = store.sections.find((section) => section.type === 'internship')!
+    const logo = 'data:image/png;base64,bG9nbw=='
+    expect(internship.items[0].logo).toBeUndefined()
+    internship.items[0].logo = logo
     fetchMock.mockResolvedValueOnce(response(200, { saved: true }))
     expect(await store.persist()).toBe(true)
     expect(fetchMock.mock.calls[1][0]).toBe('/api/resumes/resume-1')
@@ -82,6 +86,7 @@ describe('resume store', () => {
     const restoredStore = useResumeStore()
     expect(await restoredStore.loadDraft('resume-1')).toBe(true)
     expect(restoredStore.header.name).toBe('测试用户')
+    expect(restoredStore.sections.find((section) => section.type === 'internship')?.items[0].logo).toBe(logo)
   })
 
   it('fills new image settings when loading an older project draft', async () => {

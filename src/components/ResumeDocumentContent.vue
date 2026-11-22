@@ -53,7 +53,10 @@ function hasRichContent(html?: string) {
             <time v-if="item.startDate || item.endDate">{{ item.startDate }}<template v-if="item.startDate && item.endDate"> — </template>{{ item.endDate }}</time>
           </div>
           <template v-else>
-            <div class="item-title-line"><strong>{{ item.organization }}</strong><time v-if="item.startDate || item.endDate">{{ item.startDate }}<template v-if="item.startDate && item.endDate"> — </template>{{ item.endDate }}</time></div>
+            <div class="item-title-line">
+              <strong><img v-if="section.type === 'internship' && item.logo" class="company-logo" :src="item.logo" alt="" />{{ item.organization }}</strong>
+              <time v-if="item.startDate || item.endDate">{{ item.startDate }}<template v-if="item.startDate && item.endDate"> — </template>{{ item.endDate }}</time>
+            </div>
             <div v-if="item.position || item.location || item.subtitle" class="item-subtitle">
               <span v-if="item.position">{{ item.position }}</span>
               <span v-if="item.subtitle"> · {{ item.subtitle }}</span>
@@ -68,3 +71,13 @@ function hasRichContent(html?: string) {
     </section>
   </template>
 </template>
+
+<style scoped>
+.company-logo {
+  width: 1.5em;
+  height: 1.2em;
+  margin-inline-end: 0.35em;
+  object-fit: contain;
+  vertical-align: middle;
+}
+</style>

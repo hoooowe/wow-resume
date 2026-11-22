@@ -11,7 +11,7 @@ function normalizeDocumentName() { store.documentName = store.documentName.trim(
   <article class="editor-card header-editor">
     <button class="card-heading" type="button" @click="open = !open"><span class="heading-icon"><UserRound :size="18" /></span><span><strong>基本信息</strong><small>简历头部与联系方式</small></span><component :is="open ? ChevronUp : ChevronDown" :size="18" /></button>
     <div v-if="open" class="header-fields">
-      <div class="upload-row"><ImageUploader v-model="store.header.schoolLogo" v-model:size="store.header.schoolLogoSize" label="上传校徽" kind="logo" /><ImageUploader v-model="store.header.photo" v-model:size="store.header.photoSize" label="上传证件照" kind="photo" /></div>
+      <div class="upload-row"><ImageUploader v-model="store.header.schoolLogo" v-model:size="store.header.schoolLogoSize" label="校徽" kind="logo" /><ImageUploader v-model="store.header.photo" v-model:size="store.header.photoSize" label="证件照" kind="photo" /></div>
       <div class="field-grid">
         <label class="wide">简历名称（用于导出文件名）<input v-model="store.documentName" maxlength="80" @blur="normalizeDocumentName" /></label>
         <label>姓名<input v-model="store.header.name" /></label><label>求职方向<input v-model="store.header.target" /></label>

@@ -15,6 +15,7 @@ export interface EducationTags {
 export interface ResumeItem {
   id: string
   organization: string
+  logo?: string
   position: string
   startDate: string
   endDate: string

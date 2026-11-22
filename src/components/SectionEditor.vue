@@ -8,6 +8,7 @@ import ResumeIcon from './ResumeIcon.vue'
 import IconPicker from './IconPicker.vue'
 import RichTextEditor from './RichTextEditor.vue'
 import DateRangePicker from './DateRangePicker.vue'
+import ImageUploader from './ImageUploader.vue'
 
 const props = defineProps<{ section: ResumeSection }>()
 const store = useResumeStore()
@@ -74,6 +75,7 @@ const dateLabel = () => props.section.type === 'education' ? '就读时间' : '�
               <label>公司<input v-model="item.organization" placeholder="公司名称" /></label>
               <label>职位<input v-model="item.position" placeholder="职位名称" /></label>
             </div>
+            <ImageUploader class="company-logo-upload" v-model="item.logo" label="公司 Logo" kind="logo" />
             <DateRangePicker
               class="item-date-range"
               :label="dateLabel()"
@@ -143,3 +145,20 @@ const dateLabel = () => props.section.type === 'education' ? '就读时间' : '�
     <button v-if="section.expanded && section.type !== 'skills'" class="add-item-button" type="button" @click="store.addItem(section.id)"><Plus :size="16" />添加一段{{ section.title }}</button>
   </section>
 </template>
+
+<style scoped>
+.company-logo-upload {
+  width: min(100%, 200px);
+  margin-top: 10px;
+}
+
+.company-logo-upload :deep(.upload-target) {
+  display: block;
+  height: 38px;
+}
+
+.company-logo-upload :deep(.image-delete) {
+  top: 50%;
+  transform: translateY(-50%);
+}
+</style>
